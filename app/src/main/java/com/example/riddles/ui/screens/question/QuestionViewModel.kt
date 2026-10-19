@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.riddles.data.Riddle
 import com.example.riddles.data.RiddleRepository
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,6 +19,11 @@ data class QuestionUiState(
     val answered: Boolean = false,
     val selectedAnswer: String? = null,
     val correctAnswer: String? = null,
+    val attemptsLeft: Int = 3,
+    val timeLeft: Int = 15,
+    val questionNumber: Int = 0,
+    val totalQuestions: Int = 0,
+    val timedOut: Boolean = false,
     val isLoading: Boolean = true,
     val isEmpty: Boolean = false
 )
@@ -32,6 +38,7 @@ class QuestionViewModel(
     private val level: String,
     private val repository: RiddleRepository
 ) : ViewModel() {
+
     private val _uiState = MutableStateFlow(QuestionUiState())
     val uiState = _uiState.asStateFlow()
 
@@ -40,6 +47,8 @@ class QuestionViewModel(
 
     private var riddles: List<Riddle> = emptyList()
     private var currentIndex = 0
+    private var timerJob: Job? = null
+
     private val pointsPerAnswer = when (level) {
         "EASY" -> 10
         "MEDIUM" -> 20
@@ -62,48 +71,70 @@ class QuestionViewModel(
     }
 
     fun selectAnswer(answer: String) {
+        submitAnswer(answer = answer, timedOut = false)
+    }
+
+    private fun submitAnswer(answer: String?, timedOut: Boolean) {
         val state = _uiState.value
         if (state.answered || state.currentRiddle == null) return
 
         val correctAnswer = state.correctAnswer ?: return
-        val isCorrect = answer == correctAnswer
-        val newScore = state.score + if (isCorrect) pointsPerAnswer else 0
+        val isCorrect = !timedOut && answer == correctAnswer
+        val attemptsLeft = state.attemptsLeft - if (isCorrect) 0 else 1
+
+        timerJob?.cancel()
 
         _uiState.value = state.copy(
-            score = newScore,
+            score = state.score + if (isCorrect) pointsPerAnswer else 0,
             answered = true,
-            selectedAnswer = answer
+            selectedAnswer = answer,
+            attemptsLeft = attemptsLeft,
+            timeLeft = if (timedOut) 0 else state.timeLeft,
+            timedOut = timedOut
         )
 
         viewModelScope.launch {
             if (isCorrect) {
-                delay(1_000)
-                currentIndex += 1
+                delay(FEEDBACK_DELAY_MS)
+                advanceToNextRiddle()
+            } else {
+                delay(WRONG_ANSWER_DELAY_MS)
 
-                if (currentIndex >= riddles.size) {
+                if (attemptsLeft <= 0) {
                     _results.emit(
                         RoundResult(
-                            isWin = true,
-                            score = _uiState.value.score
+                            isWin = false,
+                            score = _uiState.value.score,
+                            correctAnswer = correctAnswer
                         )
                     )
                 } else {
-                    showCurrentRiddle()
+                    advanceToNextRiddle()
                 }
-            } else {
-                delay(1_500)
-                _results.emit(
-                    RoundResult(
-                        isWin = false,
-                        score = _uiState.value.score,
-                        correctAnswer = correctAnswer
-                    )
-                )
             }
         }
     }
 
+    private fun advanceToNextRiddle() {
+        currentIndex += 1
+
+        if (currentIndex >= riddles.size) {
+            viewModelScope.launch {
+                _results.emit(
+                    RoundResult(
+                        isWin = true,
+                        score = _uiState.value.score
+                    )
+                )
+            }
+        } else {
+            showCurrentRiddle()
+        }
+    }
+
     private fun showCurrentRiddle() {
+        timerJob?.cancel()
+
         val riddle = riddles[currentIndex]
         val options = listOf(
             riddle.option1,
@@ -119,8 +150,45 @@ class QuestionViewModel(
             answered = false,
             selectedAnswer = null,
             correctAnswer = correctAnswer,
+            timeLeft = QUESTION_TIME_SECONDS,
+            questionNumber = currentIndex + 1,
+            totalQuestions = riddles.size,
+            timedOut = false,
             isLoading = false,
             isEmpty = false
         )
+
+        startTimer()
+    }
+
+    private fun startTimer() {
+        timerJob?.cancel()
+        timerJob = viewModelScope.launch {
+            while (_uiState.value.timeLeft > 0 && !_uiState.value.answered) {
+                delay(1_000)
+
+                val state = _uiState.value
+                if (state.answered) return@launch
+
+                val updatedTime = (state.timeLeft - 1).coerceAtLeast(0)
+                _uiState.value = state.copy(timeLeft = updatedTime)
+
+                if (updatedTime == 0) {
+                    submitAnswer(answer = null, timedOut = true)
+                    return@launch
+                }
+            }
+        }
+    }
+
+    override fun onCleared() {
+        timerJob?.cancel()
+        super.onCleared()
+    }
+
+    private companion object {
+        const val QUESTION_TIME_SECONDS = 15
+        const val FEEDBACK_DELAY_MS = 1_500L
+        const val WRONG_ANSWER_DELAY_MS = 3_000L
     }
 }
