@@ -1,0 +1,42 @@
+<resources>
+    <string name="app_name">Загадки</string>
+
+    <string name="login_name_label">Имя</string>
+    <string name="login_password_label">Пароль</string>
+    <string name="login_button">Войти</string>
+    <string name="login_auto_register_hint">Если вас нет — аккаунт создастся автоматически</string>
+    <string name="login_empty_fields">Введите имя и пароль</string>
+    <string name="login_wrong_password">Неверный пароль</string>
+
+    <string name="home_greeting">Привет, %1$s!</string>
+    <string name="home_record">Рекорд: %1$d</string>
+    <string name="home_start_game">Начать игру</string>
+    <string name="home_statistics">Статистика</string>
+    <string name="home_logout">Выйти из аккаунта</string>
+
+    <string name="level_dialog_title">Выберите уровень</string>
+    <string name="level_easy">Лёгкий — 10 баллов</string>
+    <string name="level_medium">Средний — 20 баллов</string>
+    <string name="level_hard">Сложный — 30 баллов</string>
+    <string name="cancel">Отмена</string>
+
+    <string name="level_easy_title">Лёгкий уровень</string>
+    <string name="level_medium_title">Средний</string>
+    <string name="level_hard_title">Сложный</string>
+    <string name="question_score">Баллы: %1$d</string>
+
+    <string name="result_win_title">Ты молодец!</string>
+    <string name="result_loss_title">Ты проиграл</string>
+    <string name="result_score">Набрано баллов: %1$d</string>
+    <string name="result_new_record">Новый рекорд!</string>
+    <string name="result_correct_answer">Правильный ответ: %1$s</string>
+    <string name="result_play_again">Играть снова</string>
+    <string name="result_home">На главную</string>
+
+    <string name="stats_title">Статистика</string>
+    <string name="stats_record">Рекорд</string>
+    <string name="stats_total_games">Всего партий</string>
+    <string name="stats_wins">Побед</string>
+    <string name="stats_losses">Поражений</string>
+    <string name="back">Назад</string>
+</resources>
