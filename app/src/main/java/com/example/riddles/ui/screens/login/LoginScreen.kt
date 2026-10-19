@@ -40,9 +40,13 @@ fun LoginScreen(
     var password by remember { mutableStateOf("") }
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
+    val emptyFieldsMessage = stringResource(R.string.login_empty_fields)
+    val wrongPasswordMessage = stringResource(R.string.login_wrong_password)
 
     Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) }
+        snackbarHost = {
+            SnackbarHost(snackbarHostState)
+        }
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -65,7 +69,9 @@ fun LoginScreen(
                 value = name,
                 onValueChange = { name = it },
                 modifier = Modifier.fillMaxWidth(),
-                label = { Text(stringResource(R.string.login_name_label)) },
+                label = {
+                    Text(stringResource(R.string.login_name_label))
+                },
                 singleLine = true
             )
 
@@ -75,7 +81,9 @@ fun LoginScreen(
                 value = password,
                 onValueChange = { password = it },
                 modifier = Modifier.fillMaxWidth(),
-                label = { Text(stringResource(R.string.login_password_label)) },
+                label = {
+                    Text(stringResource(R.string.login_password_label))
+                },
                 visualTransformation = PasswordVisualTransformation(),
                 singleLine = true
             )
@@ -90,9 +98,7 @@ fun LoginScreen(
 
                     if (enteredName.isBlank() || enteredPassword.isBlank()) {
                         coroutineScope.launch {
-                            snackbarHostState.showSnackbar(
-                                message = "Введите имя и пароль"
-                            )
+                            snackbarHostState.showSnackbar(emptyFieldsMessage)
                         }
                     } else {
                         coroutineScope.launch {
@@ -108,9 +114,7 @@ fun LoginScreen(
                                 }
 
                                 LoginResult.InvalidPassword -> {
-                                    snackbarHostState.showSnackbar(
-                                        message = "Неверный пароль"
-                                    )
+                                    snackbarHostState.showSnackbar(wrongPasswordMessage)
                                 }
                             }
                         }
