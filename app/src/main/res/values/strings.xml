@@ -24,6 +24,7 @@
     <string name="level_medium_title">Средний</string>
     <string name="level_hard_title">Сложный</string>
     <string name="question_score">Баллы: %1$d</string>
+    <string name="question_empty">Для этого уровня пока нет загадок</string>
 
     <string name="result_win_title">Ты молодец!</string>
     <string name="result_loss_title">Ты проиграл</string>
